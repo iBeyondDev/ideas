@@ -261,8 +261,10 @@
     </div>
 
     <script>
-        // --- State Management ---
-        let ideas = [
+        // --- State Management & Local Storage ---
+        const STORAGE_KEY = 'creator_studio_ideas';
+        
+        let defaultIdeas = [
             { id: '1', title: 'Ultimate Desk Setup 2026', description: 'Showcase the new monitor and lighting.', platform: 'YouTube', status: 'Scripting', priority: 'High', tags: ['tech', 'setup'], createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
             { id: '2', title: '3 Hidden iOS Features', description: 'Quick vertical video.', platform: 'TikTok', status: 'Idea', priority: 'Medium', tags: ['apple', 'tips'], createdAt: new Date(Date.now() - 86400000 * 5).toISOString() },
             { id: '3', title: 'Day in the Life of a Creator', description: 'Vlog style.', platform: 'YouTube', status: 'Filming', priority: 'High', tags: ['vlog'], createdAt: new Date().toISOString() },
@@ -272,6 +274,27 @@
             { id: '7', title: 'How to script faster', description: 'Using templates.', platform: 'TikTok', status: 'Idea', priority: 'Low', tags: ['workflow'], createdAt: new Date(Date.now() - 86400000 * 15).toISOString() },
             { id: '8', title: 'My Thumbnail Process', description: 'Photoshop breakdown.', platform: 'YouTube', status: 'Idea', priority: 'Medium', tags: ['design'], createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
         ];
+
+        let ideas = [];
+        
+        // Load from local storage or use defaults
+        try {
+            const savedIdeas = localStorage.getItem(STORAGE_KEY);
+            if (savedIdeas) {
+                ideas = JSON.parse(savedIdeas);
+            } else {
+                ideas = defaultIdeas;
+                saveToLocalStorage();
+            }
+        } catch (e) {
+            console.error("Error loading data from local storage", e);
+            ideas = defaultIdeas;
+        }
+
+        // Helper function to save to local storage
+        function saveToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
+        }
 
         let state = {
             view: 'table', // 'table' or 'kanban'
@@ -607,6 +630,7 @@
             const ideaIndex = ideas.findIndex(i => i.id === id);
             if (ideaIndex !== -1 && ideas[ideaIndex].status !== newStatus) {
                 ideas[ideaIndex].status = newStatus;
+                saveToLocalStorage(); // Save changes to storage after dropping
                 renderSidebar(); // Update counts
                 renderApp();
             }
@@ -671,6 +695,8 @@
                 ideas.unshift({ id: Date.now().toString(), title, description, platform, status, priority, tags, createdAt: new Date().toISOString() });
                 showToast('Idea added');
             }
+            
+            saveToLocalStorage(); // Save changes to storage
             closeModal();
             renderSidebar();
             renderApp();
@@ -678,6 +704,7 @@
 
         function deleteIdea(id) {
             ideas = ideas.filter(i => i.id !== id);
+            saveToLocalStorage(); // Save changes to storage
             renderSidebar();
             renderApp();
             showToast('Idea deleted', 'error');
@@ -702,7 +729,13 @@
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (Array.isArray(data)) { ideas = data; renderSidebar(); renderApp(); showToast('Imported successfully'); }
+                    if (Array.isArray(data)) { 
+                        ideas = data; 
+                        saveToLocalStorage(); // Save imported data to storage
+                        renderSidebar(); 
+                        renderApp(); 
+                        showToast('Imported successfully'); 
+                    }
                     else showToast('Invalid file format', 'error');
                 } catch { showToast('Error parsing file', 'error'); }
             };
