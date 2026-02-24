@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Studio - Video Idea Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        modern: {
+                            bg: '#000000',      // Pure black
+                            surface: '#0a0a0a', // Almost black
+                            card: '#121212',    // Dark grey for cards
+                            border: 'rgba(255, 255, 255, 0.08)', // Subtle white borders
+                            hover: '#1a1a1a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Ultra-modern sleek scrollbars */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #2a2a2a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #4a4a4a; }
+        
+        .drag-over { background-color: #1a1a1a !important; border: 1px dashed rgba(255,255,255,0.4) !important; }
+        
+        /* Smooth micro-interactions */
+        .row-hover { transition: background-color 0.2s ease, transform 0.2s ease; }
+        .row-hover:hover .row-actions { opacity: 1; transform: translateX(0); }
+        .row-actions { transform: translateX(5px); transition: all 0.2s ease; }
+        
+        .kanban-card { transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .kanban-card:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.8); border-color: rgba(255,255,255,0.15); }
+
+        /* Glassmorphism utilities */
+        .glass { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+
+        @media (max-width: 1024px) { .mobile-sidebar-hidden { transform: translateX(-100%); } }
+    </style>
+</head>
+<body class="bg-modern-bg text-zinc-300 font-sans h-screen flex overflow-hidden selection:bg-white selection:text-black">
+
+    <!-- Mobile Header & Overlay -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 h-16 glass border-b border-modern-border z-40 flex justify-between items-center px-5">
+        <div class="flex items-center gap-2.5">
+            <div class="bg-white text-black p-1.5 rounded-lg"><i data-lucide="video" class="w-4 h-4"></i></div>
+            <span class="font-bold text-white tracking-tight">Creator<span class="text-zinc-500">Studio</span></span>
+        </div>
+        <button onclick="toggleMobileSidebar()" class="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-modern-hover transition-colors">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+    </div>
+    <div id="mobileOverlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-64 bg-modern-surface border-r border-modern-border flex flex-col fixed lg:static inset-y-0 left-0 z-50 transition-transform duration-300 mobile-sidebar-hidden lg:transform-none">
+        
+        <!-- Brand -->
+        <div class="h-20 flex items-center gap-3 px-6 hidden lg:flex shrink-0">
+            <div class="bg-white text-black p-2 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                <i data-lucide="triangle" class="w-5 h-5 fill-current"></i>
+            </div>
+            <span class="font-bold text-xl tracking-tight text-white">Creator<span class="text-zinc-500 font-medium">Studio</span></span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-4 px-4 flex flex-col gap-8">
+            
+            <!-- Views -->
+            <div>
+                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-2">Views</div>
+                <ul class="space-y-1">
+                    <li>
+                        <button onclick="setView('table')" id="nav-view-table" class="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-xl transition-all bg-white text-black font-semibold shadow-sm">
+                            <i data-lucide="list" class="w-4 h-4"></i> Compact List
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="setView('kanban')" id="nav-view-kanban" class="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-xl transition-all text-zinc-400 hover:bg-modern-hover hover:text-white font-medium">
+                            <i data-lucide="kanban-square" class="w-4 h-4"></i> Kanban Board
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Folders (Status) -->
+            <div>
+                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-2">Pipeline</div>
+                <ul class="space-y-1" id="navStatusList">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+
+            <!-- Platforms -->
+            <div>
+                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-2">Platforms</div>
+                <ul class="space-y-1" id="navPlatformList">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+
+            <!-- Tags -->
+            <div>
+                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-2">Tags</div>
+                <ul class="space-y-1" id="navTagList">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="p-4 grid grid-cols-2 gap-3 bg-modern-surface shrink-0">
+            <button onclick="exportData()" class="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold text-zinc-300 hover:text-white bg-modern-card hover:bg-modern-hover rounded-xl transition-colors border border-modern-border shadow-sm">
+                <i data-lucide="download" class="w-4 h-4"></i> Export
+            </button>
+            <label class="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold text-zinc-300 hover:text-white bg-modern-card hover:bg-modern-hover rounded-xl transition-colors border border-modern-border shadow-sm cursor-pointer">
+                <i data-lucide="upload" class="w-4 h-4"></i> Import
+                <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+            </label>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 bg-modern-bg mt-16 lg:mt-0 h-[calc(100vh-4rem)] lg:h-screen relative">
+        
+        <!-- Top Toolbar -->
+        <header class="h-20 px-6 lg:px-10 glass border-b border-modern-border flex items-center justify-between shrink-0 sticky top-0 z-20">
+            
+            <div class="flex items-center gap-6 flex-1 min-w-0">
+                <h1 class="text-2xl font-bold text-white tracking-tight hidden md:block truncate shrink-0 max-w-[50%]" id="currentFilterTitle">All Ideas</h1>
+                
+                <!-- Search -->
+                <div class="relative w-full max-w-md md:ml-4 group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="h-4 w-4 text-zinc-500 group-focus-within:text-white transition-colors"></i>
+                    </div>
+                    <input type="text" id="searchInput" onkeyup="renderApp()" class="block w-full pl-11 pr-4 py-2.5 border border-modern-border rounded-full bg-modern-surface text-white placeholder-zinc-500 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 text-sm transition-all shadow-inner" placeholder="Search ideas, tags...">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 ml-4 shrink-0">
+                <select id="sortFilter" onchange="renderApp()" class="bg-modern-surface border border-modern-border text-zinc-300 text-sm font-medium rounded-full focus:ring-white/20 focus:border-white/20 block px-4 py-2.5 cursor-pointer hidden sm:block appearance-none pr-8 relative shadow-sm">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="priority">Priority</option>
+                </select>
+                <button onclick="openModal()" class="flex items-center gap-2 bg-white text-black hover:bg-zinc-200 hover:scale-105 px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+                    <i data-lucide="plus" class="w-4 h-4"></i> <span class="hidden sm:inline">New Idea</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Container -->
+        <div id="appContainer" class="flex-1 overflow-auto p-6 lg:p-10 z-0 relative">
+            <!-- Rendered by JS -->
+        </div>
+        
+        <!-- Fade bottom gradient -->
+        <div class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-modern-bg to-transparent pointer-events-none z-10"></div>
+    </main>
+
+    <!-- Add/Edit Modal -->
+    <div id="ideaModal" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-modern-surface border border-modern-border rounded-3xl w-full max-w-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] transform scale-95 transition-all duration-300 flex flex-col max-h-[90vh]" id="modalContent">
+            
+            <div class="flex justify-between items-center px-8 py-6 border-b border-modern-border shrink-0">
+                <h3 class="text-xl font-bold text-white flex items-center gap-3" id="modalTitle">
+                    <div class="bg-white text-black p-1.5 rounded-lg"><i data-lucide="lightbulb" class="w-5 h-5"></i></div> Add New Video Idea
+                </h3>
+                <button onclick="closeModal()" class="text-zinc-500 hover:text-white transition-colors bg-modern-card p-2 rounded-full hover:bg-modern-hover border border-transparent hover:border-modern-border">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="ideaForm" onsubmit="saveIdea(event)" class="p-8 space-y-6 overflow-y-auto">
+                <input type="hidden" id="ideaId">
+                
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Video Title <span class="text-white">*</span></label>
+                    <input type="text" id="title" required class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 focus:border-white/30 outline-none transition-all placeholder-zinc-600 text-sm font-medium shadow-inner" placeholder="e.g., The Ultimate Desk Setup 2026">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Description / Notes</label>
+                    <textarea id="description" rows="3" class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 focus:border-white/30 outline-none transition-all placeholder-zinc-600 resize-none text-sm shadow-inner" placeholder="Script points, b-roll ideas, hooks..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Platform</label>
+                        <select id="platform" class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 outline-none text-sm appearance-none shadow-inner">
+                            <option value="YouTube">YouTube</option>
+                            <option value="TikTok">TikTok</option>
+                            <option value="Shorts">YouTube Shorts</option>
+                            <option value="Reels">Instagram Reels</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Pipeline Status</label>
+                        <select id="status" class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 outline-none text-sm appearance-none shadow-inner">
+                            <option value="Idea">💡 Idea</option>
+                            <option value="Scripting">✍️ Scripting</option>
+                            <option value="Filming">🎥 Filming</option>
+                            <option value="Editing">✂️ Editing</option>
+                            <option value="Ready">✅ Ready to Publish</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Priority</label>
+                        <div class="flex gap-3 items-center h-[50px] bg-modern-card border border-modern-border rounded-xl px-4 shadow-inner">
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                                <input type="radio" name="priority" value="Low" class="text-white focus:ring-white/30 bg-modern-bg border-modern-border">
+                                <span class="text-zinc-300">Low</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                                <input type="radio" name="priority" value="Medium" class="text-white focus:ring-white/30 bg-modern-bg border-modern-border" checked>
+                                <span class="text-zinc-300">Med</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                                <input type="radio" name="priority" value="High" class="text-white focus:ring-white/30 bg-modern-bg border-modern-border">
+                                <span class="text-zinc-300">High</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Tags (comma separated)</label>
+                        <input type="text" id="tags" class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 focus:border-white/30 outline-none transition-all placeholder-zinc-600 text-sm shadow-inner" placeholder="tech, review, setup">
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-modern-border flex justify-end gap-4 shrink-0 mt-8">
+                    <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-full text-sm font-bold text-zinc-400 hover:text-white hover:bg-modern-card border border-transparent hover:border-modern-border transition-all">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-8 py-3 rounded-full text-sm font-bold text-black bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+                        Save Idea
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-24 opacity-0 transition-all duration-300 bg-modern-surface border border-modern-border text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[70] pointer-events-none text-sm font-medium backdrop-blur-md">
+        <span id="toastIconWrapper" class="bg-white text-black p-1 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></span>
+        <span id="toastMessage">Action successful</span>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let ideas = [
+            { id: '1', title: 'Ultimate Desk Setup 2026', description: 'Showcase the new monitor and lighting.', platform: 'YouTube', status: 'Scripting', priority: 'High', tags: ['tech', 'setup'], createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+            { id: '2', title: '3 Hidden iOS Features', description: 'Quick vertical video.', platform: 'TikTok', status: 'Idea', priority: 'Medium', tags: ['apple', 'tips'], createdAt: new Date(Date.now() - 86400000 * 5).toISOString() },
+            { id: '3', title: 'Day in the Life of a Creator', description: 'Vlog style.', platform: 'YouTube', status: 'Filming', priority: 'High', tags: ['vlog'], createdAt: new Date().toISOString() },
+            { id: '4', title: 'Why I stopped using Premiere Pro', description: 'Switching to Resolve.', platform: 'YouTube', status: 'Editing', priority: 'Medium', tags: ['editing'], createdAt: new Date(Date.now() - 86400000 * 10).toISOString() },
+            { id: '5', title: 'Quick lighting tip', description: 'Bounce lighting trick.', platform: 'Shorts', status: 'Ready', priority: 'Low', tags: ['lighting'], createdAt: new Date(Date.now() - 86400000 * 1).toISOString() },
+            { id: '6', title: 'Best Budget Cameras 2026', description: '', platform: 'YouTube', status: 'Idea', priority: 'High', tags: ['gear', 'tech'], createdAt: new Date(Date.now() - 86400000 * 12).toISOString() },
+            { id: '7', title: 'How to script faster', description: 'Using templates.', platform: 'TikTok', status: 'Idea', priority: 'Low', tags: ['workflow'], createdAt: new Date(Date.now() - 86400000 * 15).toISOString() },
+            { id: '8', title: 'My Thumbnail Process', description: 'Photoshop breakdown.', platform: 'YouTube', status: 'Idea', priority: 'Medium', tags: ['design'], createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
+        ];
+
+        let state = {
+            view: 'table', // 'table' or 'kanban'
+            filterPlatform: 'All',
+            filterStatus: 'All',
+            filterTag: 'All' // New state property for tag filtering
+        };
+
+        const STATUSES = ['Idea', 'Scripting', 'Filming', 'Editing', 'Ready'];
+        const PLATFORMS = ['YouTube', 'TikTok', 'Shorts', 'Reels', 'Other'];
+
+        const ICONS = {
+            'Idea': 'lightbulb', 'Scripting': 'pen-tool', 'Filming': 'video', 'Editing': 'scissors', 'Ready': 'check-circle-2',
+            'YouTube': 'youtube', 'TikTok': 'music-2', 'Shorts': 'zap', 'Reels': 'instagram', 'Other': 'monitor-play'
+        };
+
+        const STATUS_COLORS = {
+            'Idea': 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20',
+            'Scripting': 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+            'Filming': 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+            'Editing': 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+            'Ready': 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
+        };
+
+        const PRIORITY_DOTS = {
+            'High': 'bg-red-500', 'Medium': 'bg-amber-500', 'Low': 'bg-emerald-500'
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSidebar();
+            renderApp();
+        });
+
+        // --- Sidebar & Navigation Logic ---
+        function renderSidebar() {
+            const activeCls = 'w-full flex justify-between items-center px-3 py-2.5 text-sm rounded-xl transition-all bg-white text-black font-semibold shadow-sm';
+            const inactiveCls = 'w-full flex justify-between items-center px-3 py-2.5 text-sm rounded-xl transition-all text-zinc-400 hover:bg-modern-hover hover:text-white font-medium';
+            const badgeActive = 'text-[10px] bg-black/10 text-black px-2 py-0.5 rounded-full font-bold';
+            const badgeInactive = 'text-[10px] bg-modern-border text-zinc-400 px-2 py-0.5 rounded-full font-bold';
+
+            // Extract unique tags
+            const allTags = [...new Set(ideas.flatMap(i => i.tags))].filter(t => t && t.trim() !== '').sort();
+
+            // Status List
+            const statusUl = document.getElementById('navStatusList');
+            statusUl.innerHTML = `
+                <li>
+                    <button onclick="setFilter('status', 'All')" class="${state.filterStatus === 'All' ? activeCls : inactiveCls}">
+                        <span class="flex items-center gap-3"><i data-lucide="layers" class="w-4 h-4"></i> All Stages</span>
+                        <span class="${state.filterStatus === 'All' ? badgeActive : badgeInactive}">${ideas.length}</span>
+                    </button>
+                </li>
+            ` + STATUSES.map(status => {
+                const count = ideas.filter(i => i.status === status).length;
+                const isActive = state.filterStatus === status;
+                return `
+                <li>
+                    <button onclick="setFilter('status', '${status}')" class="${isActive ? activeCls : inactiveCls}">
+                        <span class="flex items-center gap-3"><i data-lucide="${ICONS[status]}" class="w-4 h-4"></i> ${status}</span>
+                        ${count > 0 ? `<span class="${isActive ? badgeActive : badgeInactive}">${count}</span>` : ''}
+                    </button>
+                </li>`;
+            }).join('');
+
+            // Platform List
+            const platformUl = document.getElementById('navPlatformList');
+            platformUl.innerHTML = `
+                <li>
+                    <button onclick="setFilter('platform', 'All')" class="${state.filterPlatform === 'All' ? activeCls : inactiveCls}">
+                        <span class="flex items-center gap-3"><i data-lucide="globe" class="w-4 h-4"></i> All Platforms</span>
+                        <span class="${state.filterPlatform === 'All' ? badgeActive : badgeInactive}">${ideas.length}</span>
+                    </button>
+                </li>
+            ` + PLATFORMS.map(plat => {
+                const count = ideas.filter(i => i.platform === plat).length;
+                const isActive = state.filterPlatform === plat;
+                return `
+                <li>
+                    <button onclick="setFilter('platform', '${plat}')" class="${isActive ? activeCls : inactiveCls}">
+                        <span class="flex items-center gap-3"><i data-lucide="${ICONS[plat]}" class="w-4 h-4"></i> ${plat}</span>
+                        ${count > 0 ? `<span class="${isActive ? badgeActive : badgeInactive}">${count}</span>` : ''}
+                    </button>
+                </li>`;
+            }).join('');
+
+            // Tag List
+            const tagUl = document.getElementById('navTagList');
+            tagUl.innerHTML = `
+                <li>
+                    <button onclick="setFilter('tag', 'All')" class="${state.filterTag === 'All' ? activeCls : inactiveCls}">
+                        <span class="flex items-center gap-3"><i data-lucide="hash" class="w-4 h-4"></i> All Tags</span>
+                        <span class="${state.filterTag === 'All' ? badgeActive : badgeInactive}">${ideas.length}</span>
+                    </button>
+                </li>
+            ` + allTags.map(tag => {
+                const count = ideas.filter(i => i.tags.includes(tag)).length;
+                const isActive = state.filterTag === tag;
+                return `
+                <li>
+                    <button onclick="setFilter('tag', '${tag}')" class="${isActive ? activeCls : inactiveCls}">
+                        <span class="flex items-center gap-3 truncate pr-2"><i data-lucide="hash" class="w-4 h-4 shrink-0"></i> <span class="truncate">${tag}</span></span>
+                        ${count > 0 ? `<span class="${isActive ? badgeActive : badgeInactive} shrink-0">${count}</span>` : ''}
+                    </button>
+                </li>`;
+            }).join('');
+
+            // Update View Buttons
+            document.getElementById('nav-view-table').className = state.view === 'table' ? activeCls : inactiveCls;
+            document.getElementById('nav-view-kanban').className = state.view === 'kanban' ? activeCls : inactiveCls;
+
+            // Update Header Title dynamically based on active filters
+            let titleParts = [];
+            if (state.filterPlatform !== 'All') titleParts.push(state.filterPlatform);
+            if (state.filterStatus !== 'All') titleParts.push(state.filterStatus);
+            if (state.filterTag !== 'All') titleParts.push(`#${state.filterTag}`);
+
+            let title = "All Ideas";
+            if (titleParts.length > 0) {
+                title = titleParts.join(' <span class="text-zinc-600 mx-2">/</span> ');
+            }
+            document.getElementById('currentFilterTitle').innerHTML = title;
+
+            lucide.createIcons();
+        }
+
+        function setView(viewMode) {
+            state.view = viewMode;
+            renderSidebar();
+            renderApp();
+            if(window.innerWidth < 1024) toggleMobileSidebar();
+        }
+
+        function setFilter(type, value) {
+            if (type === 'status') state.filterStatus = value;
+            else if (type === 'platform') state.filterPlatform = value;
+            else if (type === 'tag') state.filterTag = value;
+            
+            renderSidebar();
+            renderApp();
+            if(window.innerWidth < 1024) toggleMobileSidebar();
+        }
+
+        function toggleMobileSidebar() {
+            const sb = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            sb.classList.toggle('mobile-sidebar-hidden');
+            overlay.classList.toggle('hidden');
+        }
+
+        // --- Rendering Core ---
+        function getFilteredIdeas() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const sort = document.getElementById('sortFilter').value;
+
+            let filtered = ideas.filter(i => {
+                const mSearch = i.title.toLowerCase().includes(search) || i.tags.some(t => t.toLowerCase().includes(search));
+                const mStat = state.filterStatus === 'All' || i.status === state.filterStatus;
+                const mPlat = state.filterPlatform === 'All' || i.platform === state.filterPlatform;
+                const mTag = state.filterTag === 'All' || i.tags.includes(state.filterTag);
+                return mSearch && mStat && mPlat && mTag;
+            });
+
+            filtered.sort((a, b) => {
+                if (sort === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
+                if (sort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+                if (sort === 'priority') {
+                    const val = { 'High': 3, 'Medium': 2, 'Low': 1 };
+                    return val[b.priority] - val[a.priority];
+                }
+                return 0;
+            });
+
+            return filtered;
+        }
+
+        function renderApp() {
+            const container = document.getElementById('appContainer');
+            container.innerHTML = '';
+            const data = getFilteredIdeas();
+
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-zinc-500 min-h-[400px]">
+                        <div class="bg-dark-card p-6 rounded-full mb-4 ring-1 ring-dark-border"><i data-lucide="ghost" class="w-8 h-8"></i></div>
+                        <p class="text-base font-medium text-zinc-300">No ideas found</p>
+                        <p class="text-sm mt-1">Try changing filters or add a new idea.</p>
+                    </div>`;
+            } else if (state.view === 'table') {
+                renderTable(container, data);
+            } else {
+                renderKanban(container, data);
+            }
+            lucide.createIcons();
+        }
+
+        // --- Compact Table View ---
+        function renderTable(container, data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bg-modern-card border border-modern-border rounded-2xl overflow-hidden shadow-2xl';
+            
+            let rowsHtml = data.map(idea => {
+                const tags = idea.tags.length > 0 && idea.tags[0] !== '' 
+                    ? `<span class="text-[10px] font-medium text-zinc-300 bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 rounded-full truncate max-w-[100px] inline-block align-middle">${idea.tags[0]}</span> ${idea.tags.length > 1 ? `<span class="text-[10px] text-zinc-500 ml-1">+${idea.tags.length - 1}</span>` : ''}` 
+                    : '';
+
+                return `
+                <tr class="border-b border-modern-border/50 row-hover group">
+                    <td class="py-4 px-5 w-10 text-center">
+                        <div class="w-2.5 h-2.5 rounded-full ${PRIORITY_DOTS[idea.priority]} mx-auto shadow-[0_0_8px_currentColor]" title="${idea.priority} Priority"></div>
+                    </td>
+                    <td class="py-4 px-5">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="${ICONS[idea.platform]}" class="w-4 h-4 text-zinc-500 shrink-0" title="${idea.platform}"></i>
+                            <span class="font-semibold text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md">${idea.title}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-5 hidden md:table-cell w-48 text-sm">${tags}</td>
+                    <td class="py-4 px-5 w-40">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/[0.04] border border-white/[0.08] text-zinc-300">
+                            <i data-lucide="${ICONS[idea.status]}" class="w-3 h-3 text-zinc-400"></i> ${idea.status}
+                        </span>
+                    </td>
+                    <td class="py-4 px-5 w-24 text-right">
+                        <div class="row-actions opacity-0 flex justify-end gap-1.5">
+                            <button onclick="editIdea('${idea.id}')" class="p-2 text-zinc-400 hover:text-white hover:bg-modern-hover rounded-lg transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                            <button onclick="deleteIdea('${idea.id}')" class="p-2 text-zinc-400 hover:text-red-400 hover:bg-modern-hover rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            wrapper.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-transparent border-b border-modern-border text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                                <th class="py-4 px-5 w-10 text-center" title="Priority"><i data-lucide="alert-circle" class="w-4 h-4 mx-auto"></i></th>
+                                <th class="py-4 px-5">Title & Platform</th>
+                                <th class="py-4 px-5 hidden md:table-cell">Tags</th>
+                                <th class="py-4 px-5">Status</th>
+                                <th class="py-4 px-5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.appendChild(wrapper);
+        }
+
+        // --- Dense Kanban View ---
+        function renderKanban(container, data) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex gap-6 overflow-x-auto pb-6 h-full items-start';
+            
+            STATUSES.forEach(status => {
+                if(state.filterStatus !== 'All' && state.filterStatus !== status) return;
+
+                const columnIdeas = data.filter(i => i.status === status);
+                
+                const col = document.createElement('div');
+                col.className = 'flex-shrink-0 w-80 flex flex-col max-h-full';
+                
+                col.innerHTML = `
+                    <div class="p-2 flex justify-between items-center shrink-0 mb-3">
+                        <div class="flex items-center gap-2.5">
+                            <i data-lucide="${ICONS[status]}" class="w-4 h-4 text-zinc-500"></i>
+                            <h3 class="font-bold text-zinc-300 text-sm tracking-wide">${status}</h3>
+                        </div>
+                        <span class="bg-white/[0.05] text-zinc-400 text-[10px] py-1 px-2.5 rounded-full font-bold border border-white/[0.05]">${columnIdeas.length}</span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto space-y-3 min-h-[150px] p-1" 
+                         ondragover="handleDragOver(event)" 
+                         ondragenter="handleDragEnter(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event, '${status}')">
+                        ${columnIdeas.length === 0 ? `<div class="text-zinc-600 text-xs font-medium text-center py-6 border border-dashed border-modern-border rounded-2xl m-1">Drop here</div>` : ''}
+                    </div>
+                `;
+
+                const colContainer = col.querySelector('div:last-child');
+                columnIdeas.forEach(idea => {
+                    colContainer.appendChild(createDenseKanbanCard(idea));
+                });
+
+                wrapper.appendChild(col);
+            });
+
+            container.appendChild(wrapper);
+        }
+
+        function createDenseKanbanCard(idea) {
+            const card = document.createElement('div');
+            card.className = `kanban-card bg-modern-card border border-modern-border p-4 rounded-2xl cursor-grab relative group shadow-sm`;
+            card.draggable = true;
+            card.ondragstart = (e) => handleDragStart(e, idea.id);
+            card.ondragend = handleDragEnd;
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2 gap-3">
+                    <h4 class="font-semibold text-white text-sm leading-snug line-clamp-2">${idea.title}</h4>
+                    <div class="w-2.5 h-2.5 rounded-full ${PRIORITY_DOTS[idea.priority]} shrink-0 mt-1 shadow-[0_0_8px_currentColor]"></div>
+                </div>
+                
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-1.5 text-zinc-400 text-[11px] font-bold uppercase tracking-wider bg-modern-bg px-2 py-1 rounded-full border border-modern-border">
+                        <i data-lucide="${ICONS[idea.platform]}" class="w-3 h-3"></i> ${idea.platform}
+                    </div>
+                    
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-modern-surface border border-modern-border rounded-lg p-1 absolute bottom-3 right-3 shadow-xl">
+                        <button onclick="editIdea('${idea.id}')" class="p-1.5 text-zinc-400 hover:text-white hover:bg-modern-hover rounded-md transition-colors"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="deleteIdea('${idea.id}')" class="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-modern-hover rounded-md transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // --- Drag & Drop ---
+        function handleDragStart(e, id) { e.dataTransfer.setData('text/plain', id); e.target.classList.add('opacity-50'); setTimeout(() => e.target.classList.add('invisible'), 0); }
+        function handleDragEnd(e) { e.target.classList.remove('opacity-50', 'invisible'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDragEnter(e) { e.preventDefault(); const col = e.target.closest('div.overflow-y-auto'); if(col) col.classList.add('drag-over'); }
+        function handleDragLeave(e) { const col = e.target.closest('div.overflow-y-auto'); if(col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over'); }
+        function handleDrop(e, newStatus) {
+            e.preventDefault();
+            const col = e.target.closest('div.overflow-y-auto');
+            if(col) col.classList.remove('drag-over');
+            const id = e.dataTransfer.getData('text/plain');
+            const ideaIndex = ideas.findIndex(i => i.id === id);
+            if (ideaIndex !== -1 && ideas[ideaIndex].status !== newStatus) {
+                ideas[ideaIndex].status = newStatus;
+                renderSidebar(); // Update counts
+                renderApp();
+            }
+        }
+
+        // --- Modals & CRUD ---
+        function openModal(id = null) {
+            const modal = document.getElementById('ideaModal');
+            const content = document.getElementById('modalContent');
+            document.getElementById('ideaForm').reset();
+            document.getElementById('ideaId').value = '';
+            document.querySelector('input[name="priority"][value="Medium"]').checked = true;
+
+            if (id) {
+                const idea = ideas.find(i => i.id === id);
+                if (idea) {
+                    document.getElementById('modalTitle').innerHTML = '<div class="bg-white text-black p-1.5 rounded-lg"><i data-lucide="edit" class="w-5 h-5"></i></div> Edit Idea';
+                    document.getElementById('ideaId').value = idea.id;
+                    document.getElementById('title').value = idea.title;
+                    document.getElementById('description').value = idea.description;
+                    document.getElementById('platform').value = idea.platform;
+                    document.getElementById('status').value = idea.status;
+                    document.getElementById('tags').value = idea.tags.join(', ');
+                    document.querySelector(`input[name="priority"][value="${idea.priority}"]`).checked = true;
+                }
+            } else {
+                document.getElementById('modalTitle').innerHTML = '<div class="bg-white text-black p-1.5 rounded-lg"><i data-lucide="lightbulb" class="w-5 h-5"></i></div> Add New Video Idea';
+                if(state.filterPlatform !== 'All') document.getElementById('platform').value = state.filterPlatform;
+                if(state.filterStatus !== 'All') document.getElementById('status').value = state.filterStatus;
+            }
+
+            lucide.createIcons();
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95', 'opacity-0');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('ideaModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        function saveIdea(e) {
+            e.preventDefault();
+            const id = document.getElementById('ideaId').value;
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const platform = document.getElementById('platform').value;
+            const status = document.getElementById('status').value;
+            const priority = document.querySelector('input[name="priority"]:checked').value;
+            const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t !== '');
+
+            if (id) {
+                const index = ideas.findIndex(i => i.id === id);
+                if (index !== -1) ideas[index] = { ...ideas[index], title, description, platform, status, priority, tags };
+                showToast('Idea updated');
+            } else {
+                ideas.unshift({ id: Date.now().toString(), title, description, platform, status, priority, tags, createdAt: new Date().toISOString() });
+                showToast('Idea added');
+            }
+            closeModal();
+            renderSidebar();
+            renderApp();
+        }
+
+        function deleteIdea(id) {
+            ideas = ideas.filter(i => i.id !== id);
+            renderSidebar();
+            renderApp();
+            showToast('Idea deleted', 'error');
+        }
+
+        function editIdea(id) { openModal(id); }
+
+        // --- File I/O ---
+        function exportData() {
+            const blob = new Blob([JSON.stringify(ideas, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `ideas_${new Date().toISOString().split('T')[0]}.json`;
+            a.click(); URL.revokeObjectURL(url);
+            showToast('Exported successfully');
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data)) { ideas = data; renderSidebar(); renderApp(); showToast('Imported successfully'); }
+                    else showToast('Invalid file format', 'error');
+                } catch { showToast('Error parsing file', 'error'); }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        // --- Utils ---
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = message;
+            document.getElementById('toastIconWrapper').innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-4 h-4"></i>`;
+            
+            toast.className = `fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 bg-modern-surface border border-modern-border text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[70] text-sm font-medium backdrop-blur-md`;
+            lucide.createIcons();
+            setTimeout(() => { toast.classList.replace('translate-y-0', 'translate-y-24'); toast.classList.replace('opacity-100', 'opacity-0'); }, 3000);
+        }
+
+        document.getElementById('ideaModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+    </script>
+</body>
+</html>
