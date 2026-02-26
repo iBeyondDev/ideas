@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creator Studio - Video Idea Tracker</title>
+    <title>Creator Studio - ADHD Friendly</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -15,11 +15,20 @@
                 extend: {
                     colors: {
                         modern: {
-                            bg: '#000000',      // Pure black
-                            surface: '#0a0a0a', // Almost black
-                            card: '#121212',    // Dark grey for cards
-                            border: 'rgba(255, 255, 255, 0.08)', // Subtle white borders
-                            hover: '#1a1a1a'
+                            bg: '#0f0f13',      // Softer dark background (less eye strain)
+                            surface: '#18181c', // Slightly lighter surface
+                            card: '#202027',    // Card color
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            hover: '#2a2a35'
+                        }
+                    },
+                    animation: {
+                        'fall': 'fall 2s ease-in-out forwards',
+                    },
+                    keyframes: {
+                        fall: {
+                            '0%': { transform: 'translateY(-20px) rotate(0deg)', opacity: 1 },
+                            '100%': { transform: 'translateY(100vh) rotate(360deg)', opacity: 0 }
                         }
                     }
                 }
@@ -27,103 +36,104 @@
         }
     </script>
     <style>
-        /* Ultra-modern sleek scrollbars */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        /* Thicker, friendlier scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: #2a2a2a; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background-color: #4a4a4a; }
+        ::-webkit-scrollbar-thumb { background-color: #3f3f4e; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #5a5a72; }
         
-        .drag-over { background-color: #1a1a1a !important; border: 1px dashed rgba(255,255,255,0.4) !important; }
+        .drag-over { background-color: rgba(255,255,255,0.05) !important; border: 2px dashed #60a5fa !important; }
         
-        /* Smooth micro-interactions */
+        /* Bouncy micro-interactions */
         .row-hover { transition: background-color 0.2s ease, transform 0.2s ease; }
         .row-hover:hover .row-actions { opacity: 1; transform: translateX(0); }
         .row-actions { transform: translateX(5px); transition: all 0.2s ease; }
         
-        .kanban-card { transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .kanban-card:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.8); border-color: rgba(255,255,255,0.15); }
+        .kanban-card { transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: grab; }
+        .kanban-card:active { cursor: grabbing; transform: scale(0.98); }
+        .kanban-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.2); border-width: 2px; margin: -1px; }
 
-        /* Glassmorphism utilities */
-        .glass { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        /* Confetti piece styling */
+        .confetti { position: fixed; width: 10px; height: 10px; z-index: 1000; pointer-events: none; }
 
         @media (max-width: 1024px) { .mobile-sidebar-hidden { transform: translateX(-100%); } }
     </style>
 </head>
-<body class="bg-modern-bg text-zinc-300 font-sans h-screen flex overflow-hidden selection:bg-white selection:text-black">
+<body class="bg-modern-bg text-zinc-200 font-sans h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white text-[15px]">
 
-    <!-- Mobile Header & Overlay -->
-    <div class="lg:hidden fixed top-0 left-0 right-0 h-16 glass border-b border-modern-border z-40 flex justify-between items-center px-5">
+    <!-- Mobile Header -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-modern-surface border-b border-modern-border z-40 flex justify-between items-center px-5 shadow-md">
         <div class="flex items-center gap-2.5">
-            <div class="bg-white text-black p-1.5 rounded-lg"><i data-lucide="video" class="w-4 h-4"></i></div>
-            <span class="font-bold text-white tracking-tight">Creator<span class="text-zinc-500">Studio</span></span>
+            <div class="bg-indigo-500 text-white p-1.5 rounded-lg"><i data-lucide="zap" class="w-4 h-4"></i></div>
+            <span class="font-bold text-white tracking-tight text-lg">Creator<span class="text-indigo-400">Studio</span></span>
         </div>
         <button onclick="toggleMobileSidebar()" class="text-zinc-400 hover:text-white p-2 rounded-full hover:bg-modern-hover transition-colors">
             <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
     </div>
-    <div id="mobileOverlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
+    <div id="mobileOverlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/80 z-30 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
 
     <!-- Sidebar Navigation -->
-    <aside id="sidebar" class="w-64 bg-modern-surface border-r border-modern-border flex flex-col fixed lg:static inset-y-0 left-0 z-50 transition-transform duration-300 mobile-sidebar-hidden lg:transform-none">
+    <aside id="sidebar" class="w-72 bg-modern-surface border-r border-modern-border flex flex-col fixed lg:static inset-y-0 left-0 z-40 transition-transform duration-300 mobile-sidebar-hidden lg:transform-none shadow-xl">
         
         <!-- Brand -->
-        <div class="h-20 flex items-center gap-3 px-6 hidden lg:flex shrink-0">
-            <div class="bg-white text-black p-2 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                <i data-lucide="triangle" class="w-5 h-5 fill-current"></i>
+        <div class="h-24 flex items-center gap-3 px-6 hidden lg:flex shrink-0 border-b border-modern-border">
+            <div class="bg-indigo-500 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
+                <i data-lucide="zap" class="w-6 h-6 fill-current"></i>
             </div>
-            <span class="font-bold text-xl tracking-tight text-white">Creator<span class="text-zinc-500 font-medium">Studio</span></span>
+            <span class="font-bold text-2xl tracking-tight text-white">Creator<span class="text-indigo-400 font-medium">Studio</span></span>
         </div>
 
-        <div class="flex-1 overflow-y-auto py-4 px-4 flex flex-col gap-8">
+        <div class="flex-1 overflow-y-auto py-6 px-4 flex flex-col gap-8">
             
             <!-- Views -->
             <div>
-                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-2">Views</div>
-                <ul class="space-y-1">
+                <div class="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2 flex items-center gap-2"><i data-lucide="eye" class="w-3 h-3"></i> Views</div>
+                <ul class="space-y-1.5">
                     <li>
-                        <button onclick="setView('table')" id="nav-view-table" class="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-xl transition-all bg-white text-black font-semibold shadow-sm">
-                            <i data-lucide="list" class="w-4 h-4"></i> Compact List
+                        <button onclick="setView('kanban')" id="nav-view-kanban" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-semibold">
+                            <i data-lucide="kanban-square" class="w-5 h-5"></i> Visual Board
                         </button>
                     </li>
                     <li>
-                        <button onclick="setView('kanban')" id="nav-view-kanban" class="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-xl transition-all text-zinc-400 hover:bg-modern-hover hover:text-white font-medium">
-                            <i data-lucide="kanban-square" class="w-4 h-4"></i> Kanban Board
+                        <button onclick="setView('table')" id="nav-view-table" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-medium">
+                            <i data-lucide="list" class="w-5 h-5"></i> Simple List
                         </button>
                     </li>
                 </ul>
             </div>
 
-            <!-- Folders (Status) -->
+            <!-- Pipeline -->
             <div>
-                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-2">Pipeline</div>
-                <ul class="space-y-1" id="navStatusList">
+                <div class="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2 flex items-center gap-2"><i data-lucide="workflow" class="w-3 h-3"></i> Workflow</div>
+                <ul class="space-y-1.5" id="navStatusList">
                     <!-- Populated by JS -->
                 </ul>
             </div>
 
             <!-- Platforms -->
             <div>
-                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-2">Platforms</div>
-                <ul class="space-y-1" id="navPlatformList">
+                <div class="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2 flex items-center gap-2"><i data-lucide="smartphone" class="w-3 h-3"></i> Platforms</div>
+                <ul class="space-y-1.5" id="navPlatformList">
                     <!-- Populated by JS -->
                 </ul>
             </div>
 
             <!-- Tags -->
             <div>
-                <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-2">Tags</div>
-                <ul class="space-y-1" id="navTagList">
+                <div class="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2 flex items-center gap-2"><i data-lucide="tag" class="w-3 h-3"></i> Tags</div>
+                <ul class="space-y-1.5" id="navTagList">
                     <!-- Populated by JS -->
                 </ul>
             </div>
         </div>
 
         <!-- Bottom Actions -->
-        <div class="p-4 grid grid-cols-2 gap-3 bg-modern-surface shrink-0">
-            <button onclick="exportData()" class="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold text-zinc-300 hover:text-white bg-modern-card hover:bg-modern-hover rounded-xl transition-colors border border-modern-border shadow-sm">
+        <div class="p-4 grid grid-cols-2 gap-3 bg-modern-surface shrink-0 border-t border-modern-border">
+            <button onclick="exportData()" class="flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold text-zinc-300 hover:text-white bg-modern-card hover:bg-modern-hover rounded-xl transition-all border border-modern-border shadow-sm hover:scale-105">
                 <i data-lucide="download" class="w-4 h-4"></i> Export
             </button>
-            <label class="flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold text-zinc-300 hover:text-white bg-modern-card hover:bg-modern-hover rounded-xl transition-colors border border-modern-border shadow-sm cursor-pointer">
+            <label class="flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold text-zinc-300 hover:text-white bg-modern-card hover:bg-modern-hover rounded-xl transition-all border border-modern-border shadow-sm cursor-pointer hover:scale-105">
                 <i data-lucide="upload" class="w-4 h-4"></i> Import
                 <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
             </label>
@@ -133,120 +143,135 @@
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col min-w-0 bg-modern-bg mt-16 lg:mt-0 h-[calc(100vh-4rem)] lg:h-screen relative">
         
-        <!-- Top Toolbar -->
-        <header class="h-20 px-6 lg:px-10 glass border-b border-modern-border flex items-center justify-between shrink-0 sticky top-0 z-20">
+        <!-- Brain Dump Bar (Top Toolbar) -->
+        <header class="p-6 lg:px-10 lg:py-6 bg-modern-surface/80 backdrop-blur-md border-b border-modern-border shrink-0 z-20 sticky top-0 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-sm">
             
-            <div class="flex items-center gap-6 flex-1 min-w-0">
-                <h1 class="text-2xl font-bold text-white tracking-tight hidden md:block truncate shrink-0 max-w-[50%]" id="currentFilterTitle">All Ideas</h1>
-                
-                <!-- Search -->
-                <div class="relative w-full max-w-md md:ml-4 group">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i data-lucide="search" class="h-4 w-4 text-zinc-500 group-focus-within:text-white transition-colors"></i>
-                    </div>
-                    <input type="text" id="searchInput" onkeyup="renderApp()" class="block w-full pl-11 pr-4 py-2.5 border border-modern-border rounded-full bg-modern-surface text-white placeholder-zinc-500 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 text-sm transition-all shadow-inner" placeholder="Search ideas, tags...">
+            <div class="flex-1 w-full relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i data-lucide="zap" class="h-5 w-5 text-indigo-400 group-focus-within:text-indigo-300 transition-colors"></i>
                 </div>
+                <input type="text" id="quickAddInput" onkeypress="handleQuickAdd(event)" class="block w-full pl-12 pr-4 py-3.5 border-2 border-modern-border hover:border-indigo-500/50 rounded-2xl bg-modern-card text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 text-base font-medium transition-all shadow-inner" placeholder="Have an idea? Type it here and press Enter to save instantly...">
             </div>
 
-            <div class="flex items-center gap-4 ml-4 shrink-0">
-                <select id="sortFilter" onchange="renderApp()" class="bg-modern-surface border border-modern-border text-zinc-300 text-sm font-medium rounded-full focus:ring-white/20 focus:border-white/20 block px-4 py-2.5 cursor-pointer hidden sm:block appearance-none pr-8 relative shadow-sm">
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="priority">Priority</option>
-                </select>
-                <button onclick="openModal()" class="flex items-center gap-2 bg-white text-black hover:bg-zinc-200 hover:scale-105 px-6 py-2.5 rounded-full text-sm font-bold transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)]">
-                    <i data-lucide="plus" class="w-4 h-4"></i> <span class="hidden sm:inline">New Idea</span>
+            <div class="flex items-center gap-3 w-full md:w-auto shrink-0">
+                <div class="relative w-full md:w-48 group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="h-4 w-4 text-zinc-500"></i>
+                    </div>
+                    <input type="text" id="searchInput" onkeyup="renderApp()" class="block w-full pl-9 pr-3 py-3 border-2 border-modern-border rounded-xl bg-modern-card text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500 text-sm transition-all" placeholder="Search...">
+                </div>
+                
+                <button onclick="openModal()" class="flex items-center justify-center gap-2 bg-indigo-500 text-white hover:bg-indigo-400 hover:-translate-y-1 px-5 py-3 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-500/25 w-full md:w-auto whitespace-nowrap">
+                    <i data-lucide="plus" class="w-5 h-5"></i> <span>Detailed Idea</span>
                 </button>
             </div>
         </header>
 
         <!-- Dynamic Content Container -->
-        <div id="appContainer" class="flex-1 overflow-auto p-6 lg:p-10 z-0 relative">
-            <!-- Rendered by JS -->
+        <div class="flex-1 overflow-hidden flex flex-col">
+            <!-- Title Bar for active filter -->
+            <div class="px-6 lg:px-10 pt-6 pb-2 shrink-0 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-3" id="currentFilterTitle">
+                    All Ideas
+                </h1>
+                <select id="sortFilter" onchange="renderApp()" class="bg-modern-card border border-modern-border text-zinc-300 text-sm font-semibold rounded-lg focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2 cursor-pointer outline-none shadow-sm">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="priority">By Priority</option>
+                </select>
+            </div>
+
+            <div id="appContainer" class="flex-1 overflow-auto p-6 lg:p-10 pt-4 relative">
+                <!-- Rendered by JS -->
+            </div>
         </div>
-        
-        <!-- Fade bottom gradient -->
-        <div class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-modern-bg to-transparent pointer-events-none z-10"></div>
     </main>
 
     <!-- Add/Edit Modal -->
-    <div id="ideaModal" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-modern-surface border border-modern-border rounded-3xl w-full max-w-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] transform scale-95 transition-all duration-300 flex flex-col max-h-[90vh]" id="modalContent">
+    <div id="ideaModal" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-modern-surface border-2 border-modern-border rounded-3xl w-full max-w-2xl shadow-2xl transform scale-95 transition-all duration-300 flex flex-col max-h-[90vh]" id="modalContent">
             
-            <div class="flex justify-between items-center px-8 py-6 border-b border-modern-border shrink-0">
+            <div class="flex justify-between items-center px-8 py-6 border-b border-modern-border shrink-0 bg-modern-card/50 rounded-t-3xl">
                 <h3 class="text-xl font-bold text-white flex items-center gap-3" id="modalTitle">
-                    <div class="bg-white text-black p-1.5 rounded-lg"><i data-lucide="lightbulb" class="w-5 h-5"></i></div> Add New Video Idea
+                    <div class="bg-indigo-500 text-white p-2 rounded-xl"><i data-lucide="zap" class="w-5 h-5"></i></div> Idea Details
                 </h3>
-                <button onclick="closeModal()" class="text-zinc-500 hover:text-white transition-colors bg-modern-card p-2 rounded-full hover:bg-modern-hover border border-transparent hover:border-modern-border">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button onclick="closeModal()" class="text-zinc-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 p-2 rounded-full transition-all border border-transparent">
+                    <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
 
-            <form id="ideaForm" onsubmit="saveIdea(event)" class="p-8 space-y-6 overflow-y-auto">
+            <form id="ideaForm" onsubmit="saveIdea(event)" class="p-8 space-y-7 overflow-y-auto">
                 <input type="hidden" id="ideaId">
                 
                 <div>
-                    <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Video Title <span class="text-white">*</span></label>
-                    <input type="text" id="title" required class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 focus:border-white/30 outline-none transition-all placeholder-zinc-600 text-sm font-medium shadow-inner" placeholder="e.g., The Ultimate Desk Setup 2026">
+                    <label class="block text-sm font-bold text-zinc-400 mb-2">What's the core idea? <span class="text-indigo-400">*</span></label>
+                    <input type="text" id="title" required class="w-full bg-modern-card border-2 border-modern-border rounded-2xl p-4 text-white focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder-zinc-600 text-lg font-bold shadow-inner" placeholder="e.g., The Ultimate Desk Setup 2026">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Description / Notes</label>
-                    <textarea id="description" rows="3" class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 focus:border-white/30 outline-none transition-all placeholder-zinc-600 resize-none text-sm shadow-inner" placeholder="Script points, b-roll ideas, hooks..."></textarea>
+                    <label class="block text-sm font-bold text-zinc-400 mb-2">Bullet points / Notes (Dump your thoughts)</label>
+                    <textarea id="description" rows="4" class="w-full bg-modern-card border-2 border-modern-border rounded-2xl p-4 text-white focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder-zinc-600 resize-none text-base shadow-inner leading-relaxed" placeholder="- Hook: Show messy desk first...&#10;- B-roll of new lights...&#10;- Call to action at the end..."></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Platform</label>
-                        <select id="platform" class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 outline-none text-sm appearance-none shadow-inner">
-                            <option value="YouTube">YouTube</option>
-                            <option value="TikTok">TikTok</option>
-                            <option value="Shorts">YouTube Shorts</option>
-                            <option value="Reels">Instagram Reels</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Pipeline Status</label>
-                        <select id="status" class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 outline-none text-sm appearance-none shadow-inner">
-                            <option value="Idea">💡 Idea</option>
-                            <option value="Scripting">✍️ Scripting</option>
-                            <option value="Filming">🎥 Filming</option>
-                            <option value="Editing">✂️ Editing</option>
-                            <option value="Ready">✅ Ready to Publish</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Priority</label>
-                        <div class="flex gap-3 items-center h-[50px] bg-modern-card border border-modern-border rounded-xl px-4 shadow-inner">
-                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
-                                <input type="radio" name="priority" value="Low" class="text-white focus:ring-white/30 bg-modern-bg border-modern-border">
-                                <span class="text-zinc-300">Low</span>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-zinc-400">Action Priority</label>
+                        <div class="flex gap-2">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="priority" value="🔥 Urgent" class="peer sr-only">
+                                <div class="text-center p-3 rounded-xl border-2 border-modern-border bg-modern-card peer-checked:border-red-500 peer-checked:bg-red-500/10 text-sm font-bold text-zinc-400 peer-checked:text-red-400 transition-all hover:border-zinc-600">
+                                    🔥 Urgent
+                                </div>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
-                                <input type="radio" name="priority" value="Medium" class="text-white focus:ring-white/30 bg-modern-bg border-modern-border" checked>
-                                <span class="text-zinc-300">Med</span>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="priority" value="⭐ Next" class="peer sr-only" checked>
+                                <div class="text-center p-3 rounded-xl border-2 border-modern-border bg-modern-card peer-checked:border-yellow-500 peer-checked:bg-yellow-500/10 text-sm font-bold text-zinc-400 peer-checked:text-yellow-400 transition-all hover:border-zinc-600">
+                                    ⭐ Next
+                                </div>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
-                                <input type="radio" name="priority" value="High" class="text-white focus:ring-white/30 bg-modern-bg border-modern-border">
-                                <span class="text-zinc-300">High</span>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="priority" value="🧊 Whenever" class="peer sr-only">
+                                <div class="text-center p-3 rounded-xl border-2 border-modern-border bg-modern-card peer-checked:border-blue-500 peer-checked:bg-blue-500/10 text-sm font-bold text-zinc-400 peer-checked:text-blue-400 transition-all hover:border-zinc-600">
+                                    🧊 Whenever
+                                </div>
                             </label>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Tags (comma separated)</label>
-                        <input type="text" id="tags" class="w-full bg-modern-card border border-modern-border rounded-xl p-3.5 text-white focus:ring-1 focus:ring-white/30 focus:border-white/30 outline-none transition-all placeholder-zinc-600 text-sm shadow-inner" placeholder="tech, review, setup">
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-zinc-400">Tags (comma separated)</label>
+                        <input type="text" id="tags" class="w-full h-[52px] bg-modern-card border-2 border-modern-border rounded-xl px-4 text-white focus:border-indigo-500 outline-none transition-all placeholder-zinc-600 text-sm" placeholder="tech, review, setup">
                     </div>
                 </div>
 
-                <div class="pt-6 border-t border-modern-border flex justify-end gap-4 shrink-0 mt-8">
-                    <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-full text-sm font-bold text-zinc-400 hover:text-white hover:bg-modern-card border border-transparent hover:border-modern-border transition-all">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-modern-bg rounded-2xl border border-modern-border">
+                    <div>
+                        <label class="block text-sm font-bold text-zinc-400 mb-2">Platform</label>
+                        <select id="platform" class="w-full bg-modern-card border-2 border-modern-border rounded-xl p-3 text-white focus:border-indigo-500 outline-none text-sm cursor-pointer font-medium">
+                            <option value="YouTube">🔴 YouTube</option>
+                            <option value="TikTok">🎵 TikTok</option>
+                            <option value="Shorts">⚡ Shorts</option>
+                            <option value="Reels">📸 Reels</option>
+                            <option value="Other">🌐 Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-zinc-400 mb-2">Current Stage</label>
+                        <select id="status" class="w-full bg-modern-card border-2 border-modern-border rounded-xl p-3 text-white focus:border-indigo-500 outline-none text-sm cursor-pointer font-medium">
+                            <option value="Brain Dump 🧠">🧠 Brain Dump</option>
+                            <option value="Scripting ✍️">✍️ Scripting</option>
+                            <option value="Filming 🎥">🎥 Filming</option>
+                            <option value="Editing ✂️">✂️ Editing</option>
+                            <option value="Done 🎉">🎉 Done</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 shrink-0">
+                    <button type="button" onclick="closeModal()" class="px-6 py-3.5 rounded-xl text-sm font-bold text-zinc-400 hover:text-white hover:bg-modern-card transition-all">
                         Cancel
                     </button>
-                    <button type="submit" class="px-8 py-3 rounded-full text-sm font-bold text-black bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+                    <button type="submit" class="px-8 py-3.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 hover:-translate-y-1 transition-all shadow-lg shadow-indigo-600/30">
                         Save Idea
                     </button>
                 </div>
@@ -254,73 +279,80 @@
         </div>
     </div>
 
-    <!-- Toast -->
-    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-24 opacity-0 transition-all duration-300 bg-modern-surface border border-modern-border text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[70] pointer-events-none text-sm font-medium backdrop-blur-md">
-        <span id="toastIconWrapper" class="bg-white text-black p-1 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></span>
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 right-8 transform translate-y-24 opacity-0 transition-all duration-300 bg-modern-surface border-2 border-modern-border text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 z-[70] pointer-events-none text-base font-bold backdrop-blur-md">
+        <span id="toastIconWrapper" class="bg-indigo-500 text-white p-1.5 rounded-full"><i data-lucide="check" class="w-4 h-4"></i></span>
         <span id="toastMessage">Action successful</span>
     </div>
 
     <script>
-        // --- State Management & Local Storage ---
-        const STORAGE_KEY = 'creator_studio_ideas';
+        // --- State Management & Configuration ---
+        const STORAGE_KEY = 'creator_studio_adhd';
         
+        const STATUSES = ['Brain Dump 🧠', 'Scripting ✍️', 'Filming 🎥', 'Editing ✂️', 'Done 🎉'];
+        const PLATFORMS = ['YouTube', 'TikTok', 'Shorts', 'Reels', 'Other'];
+
+        // Map icons for clear visual cues
+        const ICONS = {
+            'Brain Dump 🧠': 'lightbulb', 'Scripting ✍️': 'pen-tool', 'Filming 🎥': 'video', 'Editing ✂️': 'scissors', 'Done 🎉': 'check-circle-2',
+            'YouTube': 'youtube', 'TikTok': 'music-2', 'Shorts': 'zap', 'Reels': 'instagram', 'Other': 'monitor-play'
+        };
+
+        // Bright, distinct colors for status headers to aid quick scanning
+        const STATUS_THEMES = {
+            'Brain Dump 🧠': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+            'Scripting ✍️': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+            'Filming 🎥': 'bg-pink-500/10 text-pink-400 border-pink-500/20',
+            'Editing ✂️': 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+            'Done 🎉': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 ring-1 ring-emerald-500/50'
+        };
+
+        const PRIORITY_BADGES = {
+            '🔥 Urgent': 'bg-red-500/20 text-red-400 border-red-500/30', 
+            '⭐ Next': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', 
+            '🧊 Whenever': 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30'
+        };
+
         let defaultIdeas = [
-            { id: '1', title: 'Ultimate Desk Setup 2026', description: 'Showcase the new monitor and lighting.', platform: 'YouTube', status: 'Scripting', priority: 'High', tags: ['tech', 'setup'], createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
-            { id: '2', title: '3 Hidden iOS Features', description: 'Quick vertical video.', platform: 'TikTok', status: 'Idea', priority: 'Medium', tags: ['apple', 'tips'], createdAt: new Date(Date.now() - 86400000 * 5).toISOString() },
-            { id: '3', title: 'Day in the Life of a Creator', description: 'Vlog style.', platform: 'YouTube', status: 'Filming', priority: 'High', tags: ['vlog'], createdAt: new Date().toISOString() },
-            { id: '4', title: 'Why I stopped using Premiere Pro', description: 'Switching to Resolve.', platform: 'YouTube', status: 'Editing', priority: 'Medium', tags: ['editing'], createdAt: new Date(Date.now() - 86400000 * 10).toISOString() },
-            { id: '5', title: 'Quick lighting tip', description: 'Bounce lighting trick.', platform: 'Shorts', status: 'Ready', priority: 'Low', tags: ['lighting'], createdAt: new Date(Date.now() - 86400000 * 1).toISOString() },
-            { id: '6', title: 'Best Budget Cameras 2026', description: '', platform: 'YouTube', status: 'Idea', priority: 'High', tags: ['gear', 'tech'], createdAt: new Date(Date.now() - 86400000 * 12).toISOString() },
-            { id: '7', title: 'How to script faster', description: 'Using templates.', platform: 'TikTok', status: 'Idea', priority: 'Low', tags: ['workflow'], createdAt: new Date(Date.now() - 86400000 * 15).toISOString() },
-            { id: '8', title: 'My Thumbnail Process', description: 'Photoshop breakdown.', platform: 'YouTube', status: 'Idea', priority: 'Medium', tags: ['design'], createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
+            { id: '1', title: 'Ultimate Desk Setup 2026', description: '- New monitor\n- RGB lighting\n- Cable management tips', platform: 'YouTube', status: 'Scripting ✍️', priority: '🔥 Urgent', tags: ['tech', 'setup'], createdAt: new Date(Date.now() - 86400000).toISOString() },
+            { id: '2', title: '3 Hidden iOS Features', description: 'Quick vertical video.', platform: 'TikTok', status: 'Brain Dump 🧠', priority: '⭐ Next', tags: ['apple', 'tips'], createdAt: new Date().toISOString() },
+            { id: '3', title: 'Day in the Life Vlog', description: '', platform: 'YouTube', status: 'Filming 🎥', priority: '🔥 Urgent', tags: ['vlog'], createdAt: new Date().toISOString() },
+            { id: '5', title: 'Quick lighting hack', description: 'Bounce lighting trick.', platform: 'Shorts', status: 'Done 🎉', priority: '🧊 Whenever', tags: ['lighting'], createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
         ];
 
         let ideas = [];
         
-        // Load from local storage or use defaults
+        // Load data, handling migration from older versions if necessary
         try {
             const savedIdeas = localStorage.getItem(STORAGE_KEY);
             if (savedIdeas) {
                 ideas = JSON.parse(savedIdeas);
+                // Simple migration map if old data exists
+                ideas = ideas.map(i => {
+                    if(i.status === 'Idea') i.status = 'Brain Dump 🧠';
+                    if(i.status === 'Ready') i.status = 'Done 🎉';
+                    if(i.priority === 'High') i.priority = '🔥 Urgent';
+                    if(i.priority === 'Medium') i.priority = '⭐ Next';
+                    if(i.priority === 'Low') i.priority = '🧊 Whenever';
+                    if(!i.priority) i.priority = '⭐ Next';
+                    return i;
+                });
             } else {
                 ideas = defaultIdeas;
                 saveToLocalStorage();
             }
         } catch (e) {
-            console.error("Error loading data from local storage", e);
             ideas = defaultIdeas;
         }
 
-        // Helper function to save to local storage
-        function saveToLocalStorage() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
-        }
+        function saveToLocalStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas)); }
 
+        // ADHD Friendly Default: Kanban View
         let state = {
-            view: 'table', // 'table' or 'kanban'
+            view: 'kanban', 
             filterPlatform: 'All',
             filterStatus: 'All',
-            filterTag: 'All' // New state property for tag filtering
-        };
-
-        const STATUSES = ['Idea', 'Scripting', 'Filming', 'Editing', 'Ready'];
-        const PLATFORMS = ['YouTube', 'TikTok', 'Shorts', 'Reels', 'Other'];
-
-        const ICONS = {
-            'Idea': 'lightbulb', 'Scripting': 'pen-tool', 'Filming': 'video', 'Editing': 'scissors', 'Ready': 'check-circle-2',
-            'YouTube': 'youtube', 'TikTok': 'music-2', 'Shorts': 'zap', 'Reels': 'instagram', 'Other': 'monitor-play'
-        };
-
-        const STATUS_COLORS = {
-            'Idea': 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20',
-            'Scripting': 'text-blue-400 bg-blue-400/10 border-blue-400/20',
-            'Filming': 'text-purple-400 bg-purple-400/10 border-purple-400/20',
-            'Editing': 'text-orange-400 bg-orange-400/10 border-orange-400/20',
-            'Ready': 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
-        };
-
-        const PRIORITY_DOTS = {
-            'High': 'bg-red-500', 'Medium': 'bg-amber-500', 'Low': 'bg-emerald-500'
+            activeTags: [] // Changed to an array to hold multiple tags
         };
 
         // --- Initialization ---
@@ -331,13 +363,10 @@
 
         // --- Sidebar & Navigation Logic ---
         function renderSidebar() {
-            const activeCls = 'w-full flex justify-between items-center px-3 py-2.5 text-sm rounded-xl transition-all bg-white text-black font-semibold shadow-sm';
-            const inactiveCls = 'w-full flex justify-between items-center px-3 py-2.5 text-sm rounded-xl transition-all text-zinc-400 hover:bg-modern-hover hover:text-white font-medium';
-            const badgeActive = 'text-[10px] bg-black/10 text-black px-2 py-0.5 rounded-full font-bold';
-            const badgeInactive = 'text-[10px] bg-modern-border text-zinc-400 px-2 py-0.5 rounded-full font-bold';
-
-            // Extract unique tags
-            const allTags = [...new Set(ideas.flatMap(i => i.tags))].filter(t => t && t.trim() !== '').sort();
+            const activeCls = 'w-full flex justify-between items-center px-4 py-3 text-sm rounded-xl transition-all bg-indigo-500 text-white font-bold shadow-md shadow-indigo-500/20';
+            const inactiveCls = 'w-full flex justify-between items-center px-4 py-3 text-sm rounded-xl transition-all text-zinc-400 hover:bg-modern-hover hover:text-white font-semibold';
+            const badgeActive = 'text-[11px] bg-white/20 text-white px-2 py-0.5 rounded-md font-bold';
+            const badgeInactive = 'text-[11px] bg-modern-border text-zinc-400 px-2 py-0.5 rounded-md font-bold';
 
             // Status List
             const statusUl = document.getElementById('navStatusList');
@@ -354,7 +383,7 @@
                 return `
                 <li>
                     <button onclick="setFilter('status', '${status}')" class="${isActive ? activeCls : inactiveCls}">
-                        <span class="flex items-center gap-3"><i data-lucide="${ICONS[status]}" class="w-4 h-4"></i> ${status}</span>
+                        <span class="flex items-center gap-3"><i data-lucide="${ICONS[status]}" class="w-4 h-4"></i> ${status.split(' ')[0]}</span>
                         ${count > 0 ? `<span class="${isActive ? badgeActive : badgeInactive}">${count}</span>` : ''}
                     </button>
                 </li>`;
@@ -381,42 +410,43 @@
                 </li>`;
             }).join('');
 
-            // Tag List
+            // Tag List (Dynamically generated from current ideas)
+            const allTags = [...new Set(ideas.flatMap(i => i.tags))].filter(t => t.trim() !== '').sort();
             const tagUl = document.getElementById('navTagList');
+            const allTagsActive = state.activeTags.length === 0;
+            
             tagUl.innerHTML = `
                 <li>
-                    <button onclick="setFilter('tag', 'All')" class="${state.filterTag === 'All' ? activeCls : inactiveCls}">
+                    <button onclick="toggleTagFilter('All')" class="${allTagsActive ? activeCls : inactiveCls}">
                         <span class="flex items-center gap-3"><i data-lucide="hash" class="w-4 h-4"></i> All Tags</span>
-                        <span class="${state.filterTag === 'All' ? badgeActive : badgeInactive}">${ideas.length}</span>
+                        <span class="${allTagsActive ? badgeActive : badgeInactive}">${ideas.length}</span>
                     </button>
                 </li>
             ` + allTags.map(tag => {
                 const count = ideas.filter(i => i.tags.includes(tag)).length;
-                const isActive = state.filterTag === tag;
+                const isActive = state.activeTags.includes(tag);
                 return `
                 <li>
-                    <button onclick="setFilter('tag', '${tag}')" class="${isActive ? activeCls : inactiveCls}">
-                        <span class="flex items-center gap-3 truncate pr-2"><i data-lucide="hash" class="w-4 h-4 shrink-0"></i> <span class="truncate">${tag}</span></span>
-                        ${count > 0 ? `<span class="${isActive ? badgeActive : badgeInactive} shrink-0">${count}</span>` : ''}
+                    <button onclick="toggleTagFilter('${tag}')" class="${isActive ? activeCls : inactiveCls}">
+                        <span class="flex items-center gap-3 w-full truncate">
+                            <i data-lucide="${isActive ? 'check-square' : 'square'}" class="w-4 h-4 shrink-0"></i> 
+                            <span class="truncate">${tag}</span>
+                        </span>
+                        ${count > 0 ? `<span class="${isActive ? badgeActive : badgeInactive}">${count}</span>` : ''}
                     </button>
                 </li>`;
             }).join('');
 
-            // Update View Buttons
+            // View Buttons
             document.getElementById('nav-view-table').className = state.view === 'table' ? activeCls : inactiveCls;
             document.getElementById('nav-view-kanban').className = state.view === 'kanban' ? activeCls : inactiveCls;
 
-            // Update Header Title dynamically based on active filters
+            // Update Header Title
             let titleParts = [];
             if (state.filterPlatform !== 'All') titleParts.push(state.filterPlatform);
             if (state.filterStatus !== 'All') titleParts.push(state.filterStatus);
-            if (state.filterTag !== 'All') titleParts.push(`#${state.filterTag}`);
-
-            let title = "All Ideas";
-            if (titleParts.length > 0) {
-                title = titleParts.join(' <span class="text-zinc-600 mx-2">/</span> ');
-            }
-            document.getElementById('currentFilterTitle').innerHTML = title;
+            if (state.activeTags.length > 0) titleParts.push(state.activeTags.map(t => '#' + t).join(', '));
+            document.getElementById('currentFilterTitle').innerHTML = titleParts.length > 0 ? titleParts.join(' <span class="text-zinc-600 mx-2">/</span> ') : "Everything";
 
             lucide.createIcons();
         }
@@ -431,11 +461,26 @@
         function setFilter(type, value) {
             if (type === 'status') state.filterStatus = value;
             else if (type === 'platform') state.filterPlatform = value;
-            else if (type === 'tag') state.filterTag = value;
-            
             renderSidebar();
             renderApp();
             if(window.innerWidth < 1024) toggleMobileSidebar();
+        }
+
+        function toggleTagFilter(tag) {
+            if (tag === 'All') {
+                state.activeTags = []; // Clear all tags
+            } else {
+                const index = state.activeTags.indexOf(tag);
+                if (index > -1) {
+                    state.activeTags.splice(index, 1); // Remove if already selected
+                } else {
+                    state.activeTags.push(tag); // Add if not selected
+                }
+            }
+            renderSidebar();
+            renderApp();
+            // Note: We intentionally DO NOT close the mobile sidebar here
+            // so you can easily tap multiple tags at once!
         }
 
         function toggleMobileSidebar() {
@@ -443,6 +488,33 @@
             const overlay = document.getElementById('mobileOverlay');
             sb.classList.toggle('mobile-sidebar-hidden');
             overlay.classList.toggle('hidden');
+        }
+
+        // --- Quick Add Function (Zero Friction) ---
+        function handleQuickAdd(e) {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('quickAddInput');
+                const title = input.value.trim();
+                if (title) {
+                    // Instantly push to top of Brain Dump
+                    ideas.unshift({
+                        id: Date.now().toString(),
+                        title: title,
+                        description: '',
+                        platform: 'YouTube', // Default
+                        status: 'Brain Dump 🧠',
+                        priority: '⭐ Next',
+                        tags: [],
+                        createdAt: new Date().toISOString()
+                    });
+                    input.value = '';
+                    saveToLocalStorage();
+                    renderSidebar();
+                    renderApp();
+                    showToast('Idea captured! 🧠');
+                    input.blur(); // Drop focus
+                }
+            }
         }
 
         // --- Rendering Core ---
@@ -454,7 +526,10 @@
                 const mSearch = i.title.toLowerCase().includes(search) || i.tags.some(t => t.toLowerCase().includes(search));
                 const mStat = state.filterStatus === 'All' || i.status === state.filterStatus;
                 const mPlat = state.filterPlatform === 'All' || i.platform === state.filterPlatform;
-                const mTag = state.filterTag === 'All' || i.tags.includes(state.filterTag);
+                
+                // Show idea if it matches AT LEAST ONE of the selected tags (OR logic)
+                const mTag = state.activeTags.length === 0 || state.activeTags.some(tag => i.tags.includes(tag));
+                
                 return mSearch && mStat && mPlat && mTag;
             });
 
@@ -462,8 +537,8 @@
                 if (sort === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
                 if (sort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
                 if (sort === 'priority') {
-                    const val = { 'High': 3, 'Medium': 2, 'Low': 1 };
-                    return val[b.priority] - val[a.priority];
+                    const val = { '🔥 Urgent': 3, '⭐ Next': 2, '🧊 Whenever': 1 };
+                    return (val[b.priority] || 0) - (val[a.priority] || 0);
                 }
                 return 0;
             });
@@ -479,9 +554,11 @@
             if (data.length === 0) {
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center h-full text-zinc-500 min-h-[400px]">
-                        <div class="bg-dark-card p-6 rounded-full mb-4 ring-1 ring-dark-border"><i data-lucide="ghost" class="w-8 h-8"></i></div>
-                        <p class="text-base font-medium text-zinc-300">No ideas found</p>
-                        <p class="text-sm mt-1">Try changing filters or add a new idea.</p>
+                        <div class="bg-modern-surface p-8 rounded-full mb-6 border-2 border-modern-border border-dashed">
+                            <i data-lucide="inbox" class="w-12 h-12 text-zinc-600"></i>
+                        </div>
+                        <p class="text-xl font-bold text-zinc-300">Nothing here yet!</p>
+                        <p class="text-base mt-2 text-zinc-500">Type in the top bar to capture a quick idea.</p>
                     </div>`;
             } else if (state.view === 'table') {
                 renderTable(container, data);
@@ -491,37 +568,37 @@
             lucide.createIcons();
         }
 
-        // --- Compact Table View ---
+        // --- Table View ---
         function renderTable(container, data) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'bg-modern-card border border-modern-border rounded-2xl overflow-hidden shadow-2xl';
+            wrapper.className = 'bg-modern-surface border-2 border-modern-border rounded-2xl overflow-hidden shadow-xl';
             
             let rowsHtml = data.map(idea => {
-                const tags = idea.tags.length > 0 && idea.tags[0] !== '' 
-                    ? `<span class="text-[10px] font-medium text-zinc-300 bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 rounded-full truncate max-w-[100px] inline-block align-middle">${idea.tags[0]}</span> ${idea.tags.length > 1 ? `<span class="text-[10px] text-zinc-500 ml-1">+${idea.tags.length - 1}</span>` : ''}` 
-                    : '';
-
+                const tagStr = idea.tags.length > 0 ? idea.tags.join(', ') : '';
                 return `
-                <tr class="border-b border-modern-border/50 row-hover group">
-                    <td class="py-4 px-5 w-10 text-center">
-                        <div class="w-2.5 h-2.5 rounded-full ${PRIORITY_DOTS[idea.priority]} mx-auto shadow-[0_0_8px_currentColor]" title="${idea.priority} Priority"></div>
-                    </td>
-                    <td class="py-4 px-5">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="${ICONS[idea.platform]}" class="w-4 h-4 text-zinc-500 shrink-0" title="${idea.platform}"></i>
-                            <span class="font-semibold text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md">${idea.title}</span>
-                        </div>
-                    </td>
-                    <td class="py-4 px-5 hidden md:table-cell w-48 text-sm">${tags}</td>
-                    <td class="py-4 px-5 w-40">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/[0.04] border border-white/[0.08] text-zinc-300">
-                            <i data-lucide="${ICONS[idea.status]}" class="w-3 h-3 text-zinc-400"></i> ${idea.status}
+                <tr class="border-b border-modern-border/50 row-hover group cursor-pointer" onclick="editIdea('${idea.id}')">
+                    <td class="py-4 px-6 w-40">
+                        <span class="inline-block px-3 py-1 rounded-lg text-xs font-bold border ${PRIORITY_BADGES[idea.priority]} whitespace-nowrap">
+                            ${idea.priority}
                         </span>
                     </td>
-                    <td class="py-4 px-5 w-24 text-right">
-                        <div class="row-actions opacity-0 flex justify-end gap-1.5">
-                            <button onclick="editIdea('${idea.id}')" class="p-2 text-zinc-400 hover:text-white hover:bg-modern-hover rounded-lg transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                            <button onclick="deleteIdea('${idea.id}')" class="p-2 text-zinc-400 hover:text-red-400 hover:bg-modern-hover rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <td class="py-4 px-6">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-modern-card p-2 rounded-lg border border-modern-border text-zinc-400">
+                                <i data-lucide="${ICONS[idea.platform]}" class="w-4 h-4"></i>
+                            </div>
+                            <span class="font-bold text-white text-base">${idea.title}</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6 hidden md:table-cell text-zinc-500 text-sm truncate max-w-[200px]">${tagStr}</td>
+                    <td class="py-4 px-6 w-48">
+                        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border ${STATUS_THEMES[idea.status]} whitespace-nowrap">
+                            ${idea.status}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 w-24 text-right">
+                        <div class="row-actions opacity-0 flex justify-end gap-2" onclick="event.stopPropagation()">
+                            <button onclick="deleteIdea('${idea.id}')" class="p-2 text-zinc-500 hover:text-white hover:bg-red-500 rounded-xl transition-all"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                         </div>
                     </td>
                 </tr>`;
@@ -530,15 +607,6 @@
             wrapper.innerHTML = `
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse whitespace-nowrap">
-                        <thead>
-                            <tr class="bg-transparent border-b border-modern-border text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                                <th class="py-4 px-5 w-10 text-center" title="Priority"><i data-lucide="alert-circle" class="w-4 h-4 mx-auto"></i></th>
-                                <th class="py-4 px-5">Title & Platform</th>
-                                <th class="py-4 px-5 hidden md:table-cell">Tags</th>
-                                <th class="py-4 px-5">Status</th>
-                                <th class="py-4 px-5 text-right">Actions</th>
-                            </tr>
-                        </thead>
                         <tbody class="text-sm">
                             ${rowsHtml}
                         </tbody>
@@ -548,40 +616,44 @@
             container.appendChild(wrapper);
         }
 
-        // --- Dense Kanban View ---
+        // --- Visual Kanban View ---
         function renderKanban(container, data) {
             const wrapper = document.createElement('div');
-            wrapper.className = 'flex gap-6 overflow-x-auto pb-6 h-full items-start';
+            wrapper.className = 'flex gap-6 overflow-x-auto pb-8 h-full items-start w-full';
             
             STATUSES.forEach(status => {
                 if(state.filterStatus !== 'All' && state.filterStatus !== status) return;
 
                 const columnIdeas = data.filter(i => i.status === status);
+                const theme = STATUS_THEMES[status];
                 
                 const col = document.createElement('div');
-                col.className = 'flex-shrink-0 w-80 flex flex-col max-h-full';
+                // Wider columns, distinct backgrounds for the column lane
+                col.className = 'flex-shrink-0 w-[340px] flex flex-col max-h-full bg-modern-surface/30 rounded-3xl p-3 border border-modern-border border-dashed';
                 
                 col.innerHTML = `
-                    <div class="p-2 flex justify-between items-center shrink-0 mb-3">
-                        <div class="flex items-center gap-2.5">
-                            <i data-lucide="${ICONS[status]}" class="w-4 h-4 text-zinc-500"></i>
-                            <h3 class="font-bold text-zinc-300 text-sm tracking-wide">${status}</h3>
+                    <div class="p-3 mb-3 rounded-2xl flex justify-between items-center shrink-0 border ${theme}">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-sm uppercase tracking-wider">${status}</h3>
                         </div>
-                        <span class="bg-white/[0.05] text-zinc-400 text-[10px] py-1 px-2.5 rounded-full font-bold border border-white/[0.05]">${columnIdeas.length}</span>
+                        <span class="bg-black/20 text-current text-xs py-1 px-2.5 rounded-lg font-bold">${columnIdeas.length}</span>
                     </div>
-                    <div class="flex-1 overflow-y-auto space-y-3 min-h-[150px] p-1" 
+                    <div class="flex-1 overflow-y-auto space-y-4 min-h-[200px] p-1 rounded-xl" 
                          ondragover="handleDragOver(event)" 
                          ondragenter="handleDragEnter(event)"
                          ondragleave="handleDragLeave(event)"
                          ondrop="handleDrop(event, '${status}')">
-                        ${columnIdeas.length === 0 ? `<div class="text-zinc-600 text-xs font-medium text-center py-6 border border-dashed border-modern-border rounded-2xl m-1">Drop here</div>` : ''}
                     </div>
                 `;
 
-                const colContainer = col.querySelector('div:last-child');
-                columnIdeas.forEach(idea => {
-                    colContainer.appendChild(createDenseKanbanCard(idea));
-                });
+                const colContainer = col.querySelector('div.overflow-y-auto');
+                if (columnIdeas.length === 0) {
+                    colContainer.innerHTML = `<div class="text-zinc-600 text-sm font-semibold text-center py-10 rounded-2xl opacity-50">Drop here</div>`;
+                } else {
+                    columnIdeas.forEach(idea => {
+                        colContainer.appendChild(createDenseKanbanCard(idea));
+                    });
+                }
 
                 wrapper.appendChild(col);
             });
@@ -591,48 +663,94 @@
 
         function createDenseKanbanCard(idea) {
             const card = document.createElement('div');
-            card.className = `kanban-card bg-modern-card border border-modern-border p-4 rounded-2xl cursor-grab relative group shadow-sm`;
+            // Big hit area, tactile feel
+            card.className = `kanban-card bg-modern-card border-2 border-modern-border p-5 rounded-2xl relative group`;
             card.draggable = true;
             card.ondragstart = (e) => handleDragStart(e, idea.id);
             card.ondragend = handleDragEnd;
+            card.onclick = () => editIdea(idea.id); // Click whole card to edit
+
+            const hasDesc = idea.description && idea.description.trim() !== '';
 
             card.innerHTML = `
-                <div class="flex justify-between items-start mb-2 gap-3">
-                    <h4 class="font-semibold text-white text-sm leading-snug line-clamp-2">${idea.title}</h4>
-                    <div class="w-2.5 h-2.5 rounded-full ${PRIORITY_DOTS[idea.priority]} shrink-0 mt-1 shadow-[0_0_8px_currentColor]"></div>
+                <div class="flex justify-between items-start mb-3 gap-3">
+                    <span class="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold border ${PRIORITY_BADGES[idea.priority]} uppercase tracking-wider">
+                        ${idea.priority}
+                    </span>
+                    <button onclick="event.stopPropagation(); deleteIdea('${idea.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-red-400 hover:bg-modern-surface rounded-lg transition-all absolute top-4 right-4"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>
                 
-                <div class="flex items-center justify-between mt-4">
-                    <div class="flex items-center gap-1.5 text-zinc-400 text-[11px] font-bold uppercase tracking-wider bg-modern-bg px-2 py-1 rounded-full border border-modern-border">
-                        <i data-lucide="${ICONS[idea.platform]}" class="w-3 h-3"></i> ${idea.platform}
+                <h4 class="font-bold text-white text-base leading-snug mb-3 pr-6">${idea.title}</h4>
+                
+                ${hasDesc ? `<div class="text-zinc-500 text-sm mb-4 line-clamp-2 bg-modern-surface p-2.5 rounded-xl border border-modern-border/50"><i data-lucide="align-left" class="w-3 h-3 inline mr-1 mb-0.5"></i> Notes attached</div>` : ''}
+
+                <div class="flex items-center justify-between mt-auto pt-2 border-t border-modern-border/50">
+                    <div class="flex items-center gap-1.5 text-zinc-400 text-xs font-bold uppercase tracking-wider bg-modern-surface px-2.5 py-1.5 rounded-lg border border-modern-border">
+                        <i data-lucide="${ICONS[idea.platform]}" class="w-3.5 h-3.5"></i> ${idea.platform}
                     </div>
-                    
-                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-modern-surface border border-modern-border rounded-lg p-1 absolute bottom-3 right-3 shadow-xl">
-                        <button onclick="editIdea('${idea.id}')" class="p-1.5 text-zinc-400 hover:text-white hover:bg-modern-hover rounded-md transition-colors"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                        <button onclick="deleteIdea('${idea.id}')" class="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-modern-hover rounded-md transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                    </div>
+                    ${idea.tags.length > 0 ? `<div class="text-xs font-semibold text-zinc-500 bg-modern-surface px-2 py-1 rounded-md">#${idea.tags[0]}</div>` : ''}
                 </div>
             `;
             return card;
         }
 
-        // --- Drag & Drop ---
-        function handleDragStart(e, id) { e.dataTransfer.setData('text/plain', id); e.target.classList.add('opacity-50'); setTimeout(() => e.target.classList.add('invisible'), 0); }
-        function handleDragEnd(e) { e.target.classList.remove('opacity-50', 'invisible'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); }
+        // --- Drag & Drop (with Dopamine) ---
+        function handleDragStart(e, id) { 
+            e.dataTransfer.setData('text/plain', id); 
+            e.target.classList.add('opacity-40', 'scale-95'); 
+        }
+        function handleDragEnd(e) { 
+            e.target.classList.remove('opacity-40', 'scale-95'); 
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); 
+        }
         function handleDragOver(e) { e.preventDefault(); }
         function handleDragEnter(e) { e.preventDefault(); const col = e.target.closest('div.overflow-y-auto'); if(col) col.classList.add('drag-over'); }
         function handleDragLeave(e) { const col = e.target.closest('div.overflow-y-auto'); if(col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over'); }
+        
         function handleDrop(e, newStatus) {
             e.preventDefault();
             const col = e.target.closest('div.overflow-y-auto');
             if(col) col.classList.remove('drag-over');
+            
             const id = e.dataTransfer.getData('text/plain');
             const ideaIndex = ideas.findIndex(i => i.id === id);
+            
             if (ideaIndex !== -1 && ideas[ideaIndex].status !== newStatus) {
                 ideas[ideaIndex].status = newStatus;
-                saveToLocalStorage(); // Save changes to storage after dropping
-                renderSidebar(); // Update counts
+                
+                // Dopamine Check: Is it Done? Fire confetti!
+                if (newStatus === 'Done 🎉') {
+                    fireConfetti();
+                    showToast("Awesome job! Idea completed.", "success");
+                }
+
+                saveToLocalStorage(); 
+                renderSidebar(); 
                 renderApp();
+            }
+        }
+
+        // --- Confetti Reward System ---
+        function fireConfetti() {
+            const colors = ['#818cf8', '#34d399', '#f472b6', '#fbbf24', '#f87171'];
+            for(let i=0; i<60; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti rounded-sm animate-fall';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-20px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                // Randomize animation duration and delay
+                conf.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                conf.style.animationDelay = (Math.random() * 0.5) + 's';
+                // Randomize size slightly
+                const size = Math.random() * 6 + 6; 
+                conf.style.width = size + 'px';
+                conf.style.height = size + 'px';
+                
+                document.body.appendChild(conf);
+                
+                // Cleanup
+                setTimeout(() => conf.remove(), 3000);
             }
         }
 
@@ -642,22 +760,24 @@
             const content = document.getElementById('modalContent');
             document.getElementById('ideaForm').reset();
             document.getElementById('ideaId').value = '';
-            document.querySelector('input[name="priority"][value="Medium"]').checked = true;
+            document.querySelector('input[name="priority"][value="⭐ Next"]').checked = true;
 
             if (id) {
                 const idea = ideas.find(i => i.id === id);
                 if (idea) {
-                    document.getElementById('modalTitle').innerHTML = '<div class="bg-white text-black p-1.5 rounded-lg"><i data-lucide="edit" class="w-5 h-5"></i></div> Edit Idea';
+                    document.getElementById('modalTitle').innerHTML = '<div class="bg-indigo-500 text-white p-2 rounded-xl"><i data-lucide="edit-3" class="w-5 h-5"></i></div> Edit Idea';
                     document.getElementById('ideaId').value = idea.id;
                     document.getElementById('title').value = idea.title;
                     document.getElementById('description').value = idea.description;
                     document.getElementById('platform').value = idea.platform;
                     document.getElementById('status').value = idea.status;
                     document.getElementById('tags').value = idea.tags.join(', ');
-                    document.querySelector(`input[name="priority"][value="${idea.priority}"]`).checked = true;
+                    
+                    const pRadio = document.querySelector(`input[name="priority"][value="${idea.priority}"]`);
+                    if(pRadio) pRadio.checked = true;
                 }
             } else {
-                document.getElementById('modalTitle').innerHTML = '<div class="bg-white text-black p-1.5 rounded-lg"><i data-lucide="lightbulb" class="w-5 h-5"></i></div> Add New Video Idea';
+                document.getElementById('modalTitle').innerHTML = '<div class="bg-indigo-500 text-white p-2 rounded-xl"><i data-lucide="zap" class="w-5 h-5"></i></div> Idea Details';
                 if(state.filterPlatform !== 'All') document.getElementById('platform').value = state.filterPlatform;
                 if(state.filterStatus !== 'All') document.getElementById('status').value = state.filterStatus;
             }
@@ -667,6 +787,9 @@
             void modal.offsetWidth;
             modal.classList.remove('opacity-0');
             content.classList.remove('scale-95', 'opacity-0');
+            
+            // Auto focus title for quick typing
+            setTimeout(() => document.getElementById('title').focus(), 100);
         }
 
         function closeModal() {
@@ -689,25 +812,31 @@
 
             if (id) {
                 const index = ideas.findIndex(i => i.id === id);
-                if (index !== -1) ideas[index] = { ...ideas[index], title, description, platform, status, priority, tags };
-                showToast('Idea updated');
+                if (index !== -1) {
+                    const wasDone = ideas[index].status === 'Done 🎉';
+                    ideas[index] = { ...ideas[index], title, description, platform, status, priority, tags };
+                    if (!wasDone && status === 'Done 🎉') fireConfetti(); // Fire if changed to done from edit
+                }
+                showToast('Changes saved! 💾');
             } else {
                 ideas.unshift({ id: Date.now().toString(), title, description, platform, status, priority, tags, createdAt: new Date().toISOString() });
-                showToast('Idea added');
+                showToast('Idea added to the pile! 🚀');
             }
             
-            saveToLocalStorage(); // Save changes to storage
+            saveToLocalStorage();
             closeModal();
             renderSidebar();
             renderApp();
         }
 
         function deleteIdea(id) {
-            ideas = ideas.filter(i => i.id !== id);
-            saveToLocalStorage(); // Save changes to storage
-            renderSidebar();
-            renderApp();
-            showToast('Idea deleted', 'error');
+            if(confirm("Are you sure you want to delete this idea?")) {
+                ideas = ideas.filter(i => i.id !== id);
+                saveToLocalStorage();
+                renderSidebar();
+                renderApp();
+                showToast('Idea deleted', 'error');
+            }
         }
 
         function editIdea(id) { openModal(id); }
@@ -717,9 +846,9 @@
             const blob = new Blob([JSON.stringify(ideas, null, 2)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `ideas_${new Date().toISOString().split('T')[0]}.json`;
+            a.href = url; a.download = `creator_ideas_${new Date().toISOString().split('T')[0]}.json`;
             a.click(); URL.revokeObjectURL(url);
-            showToast('Exported successfully');
+            showToast('Backup saved!');
         }
 
         function importData(e) {
@@ -731,12 +860,11 @@
                     const data = JSON.parse(e.target.result);
                     if (Array.isArray(data)) { 
                         ideas = data; 
-                        saveToLocalStorage(); // Save imported data to storage
+                        saveToLocalStorage();
                         renderSidebar(); 
                         renderApp(); 
-                        showToast('Imported successfully'); 
-                    }
-                    else showToast('Invalid file format', 'error');
+                        showToast('Ideas restored successfully!'); 
+                    } else showToast('Invalid file format', 'error');
                 } catch { showToast('Error parsing file', 'error'); }
             };
             reader.readAsText(file);
@@ -747,9 +875,16 @@
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             document.getElementById('toastMessage').innerText = message;
-            document.getElementById('toastIconWrapper').innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-4 h-4"></i>`;
             
-            toast.className = `fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 bg-modern-surface border border-modern-border text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[70] text-sm font-medium backdrop-blur-md`;
+            if (type === 'error') {
+                document.getElementById('toastIconWrapper').className = 'bg-red-500 text-white p-1.5 rounded-full';
+                document.getElementById('toastIconWrapper').innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4"></i>`;
+            } else {
+                document.getElementById('toastIconWrapper').className = 'bg-indigo-500 text-white p-1.5 rounded-full';
+                document.getElementById('toastIconWrapper').innerHTML = `<i data-lucide="check" class="w-4 h-4"></i>`;
+            }
+            
+            toast.className = `fixed bottom-8 right-8 transform translate-y-0 opacity-100 transition-all duration-300 bg-modern-surface border-2 border-modern-border text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 z-[70] text-base font-bold backdrop-blur-md`;
             lucide.createIcons();
             setTimeout(() => { toast.classList.replace('translate-y-0', 'translate-y-24'); toast.classList.replace('opacity-100', 'opacity-0'); }, 3000);
         }
