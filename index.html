@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- LocalForage for persistent storage -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -322,30 +324,17 @@
 
         let ideas = [];
         
-        // Load data, handling migration from older versions if necessary
-        try {
-            const savedIdeas = localStorage.getItem(STORAGE_KEY);
-            if (savedIdeas) {
-                ideas = JSON.parse(savedIdeas);
-                // Simple migration map if old data exists
-                ideas = ideas.map(i => {
-                    if(i.status === 'Idea') i.status = 'Brain Dump 🧠';
-                    if(i.status === 'Ready') i.status = 'Done 🎉';
-                    if(i.priority === 'High') i.priority = '🔥 Urgent';
-                    if(i.priority === 'Medium') i.priority = '⭐ Next';
-                    if(i.priority === 'Low') i.priority = '🧊 Whenever';
-                    if(!i.priority) i.priority = '⭐ Next';
-                    return i;
-                });
-            } else {
-                ideas = defaultIdeas;
-                saveToLocalStorage();
+        async function saveToLocalStorage() { 
+            try {
+                if (typeof localforage !== 'undefined') {
+                    await localforage.setItem(STORAGE_KEY, ideas); 
+                } else {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
+                }
+            } catch(e) {
+                console.error("Storage failed", e);
             }
-        } catch (e) {
-            ideas = defaultIdeas;
         }
-
-        function saveToLocalStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas)); }
 
         // ADHD Friendly Default: Kanban View
         let state = {
@@ -356,7 +345,47 @@
         };
 
         // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Request persistent storage so the browser doesn't clear data automatically
+            if (navigator.storage && navigator.storage.persist) {
+                try { await navigator.storage.persist(); } catch(e) {}
+            }
+
+            // Load data, handling migration from older versions if necessary
+            try {
+                let savedIdeas = null;
+                if (typeof localforage !== 'undefined') {
+                    savedIdeas = await localforage.getItem(STORAGE_KEY);
+                }
+                
+                // Fallback to migrate from localStorage if IndexedDB is empty or unavailable
+                if (!savedIdeas) {
+                    const oldLocal = localStorage.getItem(STORAGE_KEY);
+                    if (oldLocal) {
+                        savedIdeas = JSON.parse(oldLocal);
+                    }
+                }
+
+                if (savedIdeas && Array.isArray(savedIdeas)) {
+                    ideas = savedIdeas;
+                    // Simple migration map if old data exists
+                    ideas = ideas.map(i => {
+                        if(i.status === 'Idea') i.status = 'Brain Dump 🧠';
+                        if(i.status === 'Ready') i.status = 'Done 🎉';
+                        if(i.priority === 'High') i.priority = '🔥 Urgent';
+                        if(i.priority === 'Medium') i.priority = '⭐ Next';
+                        if(i.priority === 'Low') i.priority = '🧊 Whenever';
+                        if(!i.priority) i.priority = '⭐ Next';
+                        return i;
+                    });
+                } else {
+                    ideas = defaultIdeas;
+                }
+            } catch (e) {
+                ideas = defaultIdeas;
+            }
+
+            saveToLocalStorage();
             renderSidebar();
             renderApp();
         });
